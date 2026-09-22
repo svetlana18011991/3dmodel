@@ -46,6 +46,17 @@ button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
 .zoom-value{color:#0d6fdf;min-width:46px;text-align:right}
 .zoom-actions{display:grid;grid-template-columns:44px 1fr 44px;gap:6px;margin-top:7px}
 .zoom-actions button{padding:7px 6px}
+.proj-box{margin-bottom:10px;padding:10px;border:1px solid #d8e9fa;border-radius:12px;background:#ffffff}
+.proj-box label{display:block;font-size:12.5px;font-weight:750;margin:0 0 6px;color:#17345f}
+.proj-note{margin-top:7px;font-size:11.5px;line-height:1.4;color:#69809e}
+.view-presets{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}
+.view-presets button{padding:7px 6px;font-size:12px}
+.projection-badge{
+  position:absolute;left:14px;top:14px;background:rgba(255,255,255,.94);border:1px solid #d5e7f7;
+  color:#175a9f;border-radius:10px;padding:7px 9px;font-size:12px;font-weight:800;
+  box-shadow:0 5px 14px rgba(32,88,150,.06);z-index:4
+}
+
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tool{background:#f4f6fa;color:#2b3852;border:1px solid transparent;min-height:42px;font-size:13px}
 .tool.active{background:#e9edff;color:#3544bd;border:1px solid #9aa8ff}
@@ -123,7 +134,7 @@ input[type="range"]{accent-color:#1680f2}
   <div class="app-subtitle">
     <span class="badge">3D Геометрия</span>
   </div>
-  <div class="small">Выбирай фигуру, настраивай модель и показывай её ученикам.</div>
+  <div class="small">Выбирай фигуру, настраивай модель и показывай её ученикам. Для более понятного школьного чертежа можно включить режим «Чертёжный вид».</div>
 
   <div class="group">
     <h2>Фигура</h2>
@@ -153,6 +164,23 @@ input[type="range"]{accent-color:#1680f2}
 
   <div class="group">
     <h2>Вид</h2>
+
+    <div class="proj-box">
+      <label for="projectionMode">Тип изображения</label>
+      <select id="projectionMode">
+        <option value="perspective">Перспектива</option>
+        <option value="orthographic">Чертёжный вид</option>
+      </select>
+      <div id="projectionNote" class="proj-note">
+        Перспектива: дальние части фигуры выглядят меньше.
+      </div>
+      <div class="view-presets">
+        <button id="viewIsoBtn" class="secondary" type="button">Изометрия</button>
+        <button id="viewTopBtn" class="secondary" type="button">Сверху</button>
+        <button id="viewFrontBtn" class="secondary" type="button">Спереди</button>
+        <button id="viewSideBtn" class="secondary" type="button">Сбоку</button>
+      </div>
+    </div>
 
     <div class="zoom-box">
       <div class="zoom-head">
@@ -191,6 +219,7 @@ input[type="range"]{accent-color:#1680f2}
   </div>
 
   <div id="canvasWrap" class="canvas-wrap">
+    <div id="projectionBadge" class="projection-badge">Перспектива</div>
     <div id="stageCallout" class="stage-callout"></div>
     <canvas id="canvas"></canvas>
     <div id="infoBox" class="info"><b>Готово</b>Выбери инструмент слева.</div>
@@ -292,6 +321,9 @@ const wrap=document.getElementById('canvasWrap');
 const modelSelect=document.getElementById('modelSelect'),infoBox=document.getElementById('infoBox'),toolStatus=document.getElementById('toolStatus');
 const labels=document.getElementById('labels'),faces=document.getElementById('faces'),focus=document.getElementById('focus'),autorotate=document.getElementById('autorotate');
 const zoomRange=document.getElementById('zoomRange'),zoomValue=document.getElementById('zoomValue');
+const projectionMode=document.getElementById('projectionMode');
+const projectionNote=document.getElementById('projectionNote');
+const projectionBadge=document.getElementById('projectionBadge');
 const showPlane=document.getElementById('showPlane'),showSection=document.getElementById('showSection'),sectionList=document.getElementById('sectionList');
 const hoverHint=document.getElementById('hoverHint');
 const stageCallout=document.getElementById('stageCallout');
@@ -302,7 +334,7 @@ const sectionHelp=document.getElementById('sectionHelp');
 const clearLinesBtn=document.getElementById('clearLinesBtn');
 const clearSectionBtn=document.getElementById('clearSectionBtn');
 
-let modelKey='cube',model=models[modelKey],tool='rotate',rotX=-18*Math.PI/180,rotY=28*Math.PI/180,zoom=1;
+let modelKey='cube',model=models[modelKey],tool='rotate',rotX=-18*Math.PI/180,rotY=28*Math.PI/180,zoom=1,projection='perspective';
 let selectedLines=[],hoverEdge=-1,sectionPts=[],dragging=false,dragPoint=-1,lastX=0,lastY=0,autoLoop=false,student=false;
 
 function pretty(s){return s.replace(/1/g,'₁')}
@@ -320,8 +352,19 @@ function rotate([x,y,z]){
  return[x1,y*cx-z1*sx,y*sx+z1*cx]
 }
 function project(p){
- const [x,y,z]=rotate(p),w=canvas.clientWidth,h=canvas.clientHeight,depth=5.8,scale=Math.min(w,h)*.40*zoom,f=scale/(z+depth);
- return[w/2+x*f,h/2-y*f,z]
+ const [x,y,z]=rotate(p),w=canvas.clientWidth,h=canvas.clientHeight;
+
+ if(projection==='orthographic'){
+   // Параллельная проекция: глубина не меняет масштаб.
+   const scale=Math.min(w,h)*.17*zoom;
+   return [w/2+x*scale,h/2-y*scale,z];
+ }
+
+ // Более заметная перспектива при том же среднем размере фигуры.
+ const depth=5.0;
+ const scale=Math.min(w,h)*.85*zoom;
+ const f=scale/(z+depth);
+ return [w/2+x*f,h/2-y*f,z];
 }
 function screenDistToSeg(px,py,a,b){
  const A=project(a),B=project(b),vx=B[0]-A[0],vy=B[1]-A[1],wx=px-A[0],wy=py-A[1],den=vx*vx+vy*vy||1;
@@ -681,11 +724,59 @@ document.getElementById('clearSectionBtn').addEventListener('click',()=>{
 });
 [labels,faces,focus,showPlane,showSection].forEach(el=>el.addEventListener('change',render));
 autorotate.addEventListener('change',render);
-document.getElementById('resetView').addEventListener('click',()=>{rotX=-18*Math.PI/180;rotY=28*Math.PI/180;setZoom(100)});
+document.getElementById('resetView').addEventListener('click',()=>{
+  rotX=-18*Math.PI/180;
+  rotY=28*Math.PI/180;
+  setZoom(100);
+  render();
+});
 zoomRange.addEventListener('input',()=>setZoom(+zoomRange.value));
 document.getElementById('zoomOutBtn').addEventListener('click',()=>setZoom(Math.round(zoom*100)-10));
 document.getElementById('zoomInBtn').addEventListener('click',()=>setZoom(Math.round(zoom*100)+10));
+function updateProjectionUI(){
+  if(projection==='orthographic'){
+    projectionNote.textContent='Чертёжный вид: параллельные рёбра остаются параллельными. Для основания без искажения нажми «Сверху».';
+    projectionBadge.textContent='Чертёжный вид';
+  }else{
+    projectionNote.textContent='Перспектива: дальние части фигуры выглядят меньше, как при обычном наблюдении.';
+    projectionBadge.textContent='Перспектива';
+  }
+}
+
+projectionMode.addEventListener('change',()=>{
+  projection = projectionMode.value;
+  updateProjectionUI();
+  render();
+});
+
 document.getElementById('zoomResetBtn').addEventListener('click',()=>setZoom(100));
+
+function setView(rxDeg, ryDeg, forceOrthographic=false){
+  rotX=rxDeg*Math.PI/180;
+  rotY=ryDeg*Math.PI/180;
+  if(forceOrthographic){
+    projection='orthographic';
+    projectionMode.value='orthographic';
+    updateProjectionUI();
+  }
+  render();
+}
+
+document.getElementById('viewIsoBtn').addEventListener('click',()=>{
+  setView(-30,45,true);
+});
+document.getElementById('viewTopBtn').addEventListener('click',()=>{
+  // Вдоль оси z: основание xy показывается в истинной форме.
+  setView(0,0,true);
+});
+document.getElementById('viewFrontBtn').addEventListener('click',()=>{
+  // Вдоль оси y.
+  setView(90,0,true);
+});
+document.getElementById('viewSideBtn').addEventListener('click',()=>{
+  // Вдоль оси x.
+  setView(0,90,true);
+});
 
 document.getElementById('studentMode').addEventListener('click',()=>{student=true;document.body.classList.add('student');setTimeout(resize,40)});
 document.getElementById('backBtn').addEventListener('click',()=>{student=false;document.body.classList.remove('student');setTimeout(resize,40)});
@@ -703,7 +794,7 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 
-fillModels();setModel('cube');setTimeout(resize,30);
+fillModels();setModel('cube');updateProjectionUI();setTimeout(resize,30);
 </script>
 </body>
 </html>
