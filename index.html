@@ -3,43 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Геометрия — доска учителя v3</title>
+<title>Шкатулка математических интерактивов — Светлана Быкова</title>
 <style>
 :root{
-  --bg:#eef3f9;--panel:#ffffff;--text:#182133;--muted:#69768b;--line:#dce4ef;
-  --accent:#5367f5;--red:#d65262;--blue:#4166e8;--orange:#e5961d;--green:#16845d;
-  --shadow:0 12px 32px rgba(25,40,75,.09);
+  --bg:#eef7ff;
+  --panel:#ffffff;
+  --text:#12315f;
+  --muted:#6b7f9f;
+  --line:#d9e9f9;
+  --accent:#1476ed;
+  --accent-dark:#0d58bd;
+  --accent-soft:#eaf4ff;
+  --red:#e26472;
+  --blue:#1769e0;
+  --orange:#f39a18;
+  --green:#16845d;
+  --shadow:0 10px 28px rgba(40,94,158,.10);
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(180deg,#eaf5ff 0,#f8fbff 45%,#eef7ff 100%);color:var(--text)}
 .app{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px;min-height:100vh}
-.panel,.stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
-.panel{padding:14px;overflow:auto;max-height:calc(100vh - 24px);position:sticky;top:12px}
+.panel,.stage{background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.panel{padding:14px;overflow:auto;max-height:calc(100vh - 24px);position:sticky;top:12px;background:linear-gradient(180deg,#ffffff 0,#fafdff 100%)}
 .stage{padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
-h1{font-size:21px;margin:0 0 3px}
-h2{font-size:15px;margin:0 0 8px}
+h1{font-size:20px;line-height:1.12;margin:0;color:#0d3c7c}
+h2{font-size:15px;margin:0 0 8px;color:#123d73}
 .small{font-size:12.5px;color:var(--muted);line-height:1.45}
-.group{border-top:1px solid #e9eef5;padding-top:12px;margin-top:12px}
+.group{border:1px solid #e1edf9;background:linear-gradient(180deg,#f9fcff,#f4f9ff);border-radius:14px;padding:12px;margin-top:11px}
 select,button,input{font:inherit}
-select{width:100%;padding:8px 9px;border:1px solid #cfd8e6;border-radius:9px;background:#fff}
+select{width:100%;padding:9px 10px;border:1px solid #c9def3;border-radius:10px;background:#fff;color:#17345f;outline:none}
+select:focus{border-color:#75aef0;box-shadow:0 0 0 3px rgba(20,118,237,.10)}
 button{border:0;border-radius:9px;padding:9px 10px;font-weight:760;cursor:pointer}
-.primary{background:var(--accent);color:#fff}
-.secondary{background:#eef2f7;color:#26324a}
-.ghost{background:#fff;border:1px solid #cad5e6;color:#26324a}
+button:disabled,select:disabled{opacity:.48;cursor:not-allowed}
+.primary{background:linear-gradient(180deg,#2484f5,#116bdc);color:#fff;box-shadow:0 5px 12px rgba(20,118,237,.18)}
+.secondary{background:#eaf4ff;color:#174a83;border:1px solid #d3e6fa}
+.ghost{background:#fff;border:1px solid #c9def3;color:#174a83}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .check{display:flex;align-items:center;gap:8px;font-size:12.8px;margin:6px 0}
 .check input{width:16px;height:16px}
-.zoom-box{margin-top:10px;padding:9px;border:1px solid #e0e7f0;border-radius:11px;background:#fafbfd}
+.zoom-box{margin-top:10px;padding:10px;border:1px solid #d8e9fa;border-radius:12px;background:#ffffff}
 .zoom-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12.5px;font-weight:750}
-.zoom-value{color:#4252bd;min-width:46px;text-align:right}
+.zoom-value{color:#0d6fdf;min-width:46px;text-align:right}
 .zoom-actions{display:grid;grid-template-columns:44px 1fr 44px;gap:6px;margin-top:7px}
 .zoom-actions button{padding:7px 6px}
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tool{background:#f4f6fa;color:#2b3852;border:1px solid transparent;min-height:42px;font-size:13px}
 .tool.active{background:#e9edff;color:#3544bd;border:1px solid #9aa8ff}
-.line-pick.active{background:#e9edff;color:#3544bd;border:1px solid #9aa8ff}
-.section-start{width:100%;background:#fff5df;border:1px solid #efcc83;color:#815100;font-size:14px}
-.section-start.active{background:#ffe8b2;border-color:#e1ad3d}
+.line-pick.active{background:#dfeeff;color:#0d5fc3;border:1px solid #78adeb}
+.section-start{width:100%;background:#fff5df;border:1px solid #efc56e;color:#8a5700;font-size:14px}
+.section-start.active{background:#ffe7ad;border-color:#dfa232}
 .stage-callout{
   position:absolute;top:14px;left:50%;transform:translateX(-50%);
   background:rgba(24,32,51,.92);color:#fff;border-radius:12px;padding:10px 14px;
@@ -47,21 +59,21 @@ button{border:0;border-radius:9px;padding:9px 10px;font-weight:760;cursor:pointe
 }
 .stage-callout.show{display:block}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.mode{font-size:12.5px;font-weight:800;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#3947b8}
-.canvas-wrap{position:relative;flex:1;min-height:800px;border:1px solid #dce5f3;border-radius:16px;overflow:hidden;
-background:radial-gradient(circle at 50% 32%,#fff 0,#f4f7fb 72%,#eaf0f7 100%)}
+.mode{font-size:12.5px;font-weight:800;padding:6px 10px;border-radius:999px;background:#e8f3ff;color:#1267c7;border:1px solid #d4e8fa}
+.canvas-wrap{position:relative;flex:1;min-height:800px;border:1px solid #d5e7f7;border-radius:17px;overflow:hidden;
+background:radial-gradient(circle at 50% 32%,#ffffff 0,#f8fbff 68%,#edf6ff 100%)}
 canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 canvas.selecting{cursor:crosshair}
 .info{
-  position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,.94);border:1px solid #dce4ef;border-radius:12px;
-  padding:10px 12px;max-width:420px;font-size:13.5px;box-shadow:0 7px 18px rgba(20,35,70,.06)
+  position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,.95);border:1px solid #d5e7f7;border-radius:12px;
+  padding:10px 12px;max-width:420px;font-size:13.5px;box-shadow:0 7px 18px rgba(32,88,150,.07)
 }
 .info b{display:block;margin-bottom:3px;font-size:14px}
 .hint{
-  position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.9);border:1px solid #e0e6ef;border-radius:12px;
-  padding:8px 10px;font-size:12px;color:#536078
+  position:absolute;right:14px;bottom:14px;background:rgba(245,250,255,.95);border:1px solid #d5e7f7;border-radius:12px;
+  padding:8px 10px;font-size:12px;color:#58718f
 }
-.back-btn{position:fixed;right:18px;top:18px;z-index:30;background:#172033;color:#fff;padding:11px 16px;border-radius:11px;
+.back-btn{position:fixed;right:18px;top:18px;z-index:30;background:#126fdc;color:#fff;padding:11px 16px;border-radius:11px;
 display:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
 .student .panel{display:none}
 .student .app{grid-template-columns:1fr;padding:0}
@@ -70,9 +82,29 @@ display:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
 .student .canvas-wrap{border:0;border-radius:0;min-height:100vh}
 .student .back-btn{display:block}
 .student .hint{display:none}
-.badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 7px;border-radius:999px;background:#eef2ff;color:#3b49bc;margin-bottom:7px}
-.status{padding:8px 9px;border-radius:10px;background:#f7f9fc;border:1px solid #e2e8f1;font-size:12.5px;line-height:1.4}
+.badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:999px;background:#e8f3ff;color:#1267c7;margin-bottom:7px;border:1px solid #d4e8fa}
+.status{padding:8px 9px;border-radius:10px;background:#ffffff;border:1px solid #dceafa;font-size:12.5px;line-height:1.4;color:#526b88}
 .section-list{font-size:12px;color:#556279;margin-top:7px}
+
+.brand{
+  display:flex;align-items:center;gap:10px;padding:5px 2px 11px;
+}
+.brand-mark{
+  width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#1584f5,#0d61cc);
+  color:white;display:grid;place-items:center;font-size:24px;font-weight:900;
+  box-shadow:0 7px 16px rgba(20,118,237,.20);
+}
+.brand-title{font-size:17px;font-weight:850;line-height:1.12;color:#0e3b77}
+.brand-author{font-size:13px;color:#637e9e;margin-top:3px;font-weight:650}
+.app-subtitle{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  margin-bottom:3px;padding:1px 2px;
+}
+.app-name{font-size:12px;font-weight:800;color:#1671d8}
+button{transition:.15s ease}
+button:not(:disabled):hover{transform:translateY(-1px);filter:brightness(.99)}
+input[type="range"]{accent-color:#1680f2}
+
 @media(max-width:980px){.app{grid-template-columns:1fr}.panel{position:static;max-height:none}.canvas-wrap{min-height:650px}}
 </style>
 </head>
@@ -81,9 +113,17 @@ display:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
 
 <div class="app">
 <aside class="panel">
-  <div class="badge">Версия 3</div>
-  <h1>3D Геометрия</h1>
-  <div class="small">Выбери инструмент и работай прямо на модели.</div>
+  <div class="brand">
+    <div class="brand-mark">◇</div>
+    <div>
+      <div class="brand-title">Шкатулка математических интерактивов</div>
+      <div class="brand-author">Светлана Быкова</div>
+    </div>
+  </div>
+  <div class="app-subtitle">
+    <span class="badge">3D Геометрия</span>
+  </div>
+  <div class="small">Выбирай фигуру, настраивай модель и показывай её ученикам.</div>
 
   <div class="group">
     <h2>Фигура</h2>
@@ -135,7 +175,7 @@ display:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
 
   <div class="group" id="sectionBlock">
     <h2>Сечение</h2>
-    <div class="small">Поставь три точки прямо на рёбрах фигуры. После третьей точки сечение построится автоматически.</div>
+    <div id="sectionHelp" class="small">Поставь три точки прямо на рёбрах фигуры. После третьей точки сечение построится автоматически.</div>
     <button id="startSectionBtn" class="section-start" style="margin-top:8px">✂ Начать построение сечения</button>
     <div class="check"><input id="showPlane" type="checkbox"><span>Секущая плоскость</span></div>
     <div class="check"><input id="showSection" type="checkbox" checked><span>Многоугольник сечения</span></div>
@@ -258,6 +298,9 @@ const stageCallout=document.getElementById('stageCallout');
 const line1Select=document.getElementById('line1Select'),line2Select=document.getElementById('line2Select');
 const pickLinesBtn=document.getElementById('pickLinesBtn'),lineStatus=document.getElementById('lineStatus');
 const startSectionBtn=document.getElementById('startSectionBtn');
+const sectionHelp=document.getElementById('sectionHelp');
+const clearLinesBtn=document.getElementById('clearLinesBtn');
+const clearSectionBtn=document.getElementById('clearSectionBtn');
 
 let modelKey='cube',model=models[modelKey],tool='rotate',rotX=-18*Math.PI/180,rotY=28*Math.PI/180,zoom=1;
 let selectedLines=[],hoverEdge=-1,sectionPts=[],dragging=false,dragPoint=-1,lastX=0,lastY=0,autoLoop=false,student=false;
@@ -297,6 +340,24 @@ function fillModels(){
 function fillLineSelects(){
  line1Select.innerHTML='';
  line2Select.innerHTML='';
+
+ if(model.curved){
+   line1Select.add(new Option('Не применяется',''));
+   line2Select.add(new Option('Не применяется',''));
+   line1Select.disabled=true;
+   line2Select.disabled=true;
+   pickLinesBtn.disabled=true;
+   clearLinesBtn.disabled=true;
+   selectedLines=[];
+   updateLineInfo();
+   return;
+ }
+
+ line1Select.disabled=false;
+ line2Select.disabled=false;
+ pickLinesBtn.disabled=false;
+ clearLinesBtn.disabled=false;
+
  model.edges.forEach((e,i)=>{
    const name=edgeName(i);
    line1Select.add(new Option(name,i));
@@ -319,7 +380,31 @@ function syncLineSelectsFromModel(){
 }
 function setModel(k){
  modelKey=k;model=models[k];selectedLines=[];sectionPts=[];hoverEdge=-1;tool='rotate';
+
  fillLineSelects();
+
+ if(model.curved){
+   focus.checked=false;
+   focus.disabled=true;
+   startSectionBtn.disabled=true;
+   clearSectionBtn.disabled=true;
+   showPlane.disabled=true;
+   showSection.disabled=true;
+   startSectionBtn.textContent='Сечение для тел вращения пока недоступно';
+   sectionHelp.textContent='Для этого тела доступен чистый пространственный просмотр. Технические линии модели не считаются рёбрами и не выбираются.';
+   showPlane.checked=false;
+   showSection.checked=false;
+ }else{
+   focus.disabled=false;
+   startSectionBtn.disabled=false;
+   clearSectionBtn.disabled=false;
+   showPlane.disabled=false;
+   showSection.disabled=false;
+   startSectionBtn.textContent='✂ Начать построение сечения';
+   sectionHelp.textContent='Поставь три точки прямо на рёбрах фигуры. После третьей точки сечение построится автоматически.';
+   if(!showSection.checked) showSection.checked=true;
+ }
+
  setToolUI();
  render();
  updateSectionList();
@@ -330,10 +415,17 @@ function setTool(t){
 }
 
 function setToolUI(){
- canvas.classList.toggle('selecting',tool==='lines'||tool==='section');
+ if(model.curved && (tool==='lines'||tool==='section')) tool='rotate';
+
+ canvas.classList.toggle('selecting',!model.curved&&(tool==='lines'||tool==='section'));
  pickLinesBtn.classList.toggle('active',tool==='lines');
  startSectionBtn.classList.toggle('active',tool==='section');
  stageCallout.classList.remove('show');
+
+ if(model.curved){
+   lineStatus.textContent='У тел вращения технические линии каркаса не считаются прямыми для выбора.';
+   return;
+ }
 
  if(tool==='lines'){
    lineStatus.textContent='Щёлкни по первой, затем по второй прямой.';
@@ -344,9 +436,7 @@ function setToolUI(){
  }
 
  if(tool==='section'){
-   if(model.curved){
-     stageCallout.textContent='Для тел вращения сечения будут отдельным режимом';
-   }else if(sectionPts.length===0){
+   if(sectionPts.length===0){
      stageCallout.textContent='Сечение: выберите первое ребро';
    }else if(sectionPts.length===1){
      stageCallout.textContent='Сечение: выберите второе ребро';
@@ -393,7 +483,7 @@ function drawSectionData(sec){
  }
  if(showSection.checked){
   ctx.save();ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);q.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();
-  ctx.fillStyle='rgba(234,155,28,.12)';ctx.fill();ctx.strokeStyle='#df941b';ctx.lineWidth=2;ctx.stroke();ctx.restore()
+  ctx.fillStyle='rgba(234,155,28,.12)';ctx.fill();ctx.strokeStyle='#ee9714';ctx.lineWidth=2;ctx.stroke();ctx.restore()
  }
 }
 function getSection(){
@@ -411,7 +501,7 @@ function getSection(){
  return{points:u,center:c,normal:nn}
 }
 function drawSectionPoints(){
- sectionPts.forEach((sp,i)=>{const q=project(edgePoint(sp.edge,sp.t));ctx.beginPath();ctx.arc(q[0],q[1],6,0,Math.PI*2);ctx.fillStyle='#e4961b';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.font='700 12px Inter';ctx.fillStyle='#a65f00';ctx.fillText(['M','N','K'][i],q[0]+8,q[1]-7)})
+ sectionPts.forEach((sp,i)=>{const q=project(edgePoint(sp.edge,sp.t));ctx.beginPath();ctx.arc(q[0],q[1],6,0,Math.PI*2);ctx.fillStyle='#f39a18';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.font='700 12px Inter';ctx.fillStyle='#9a5b00';ctx.fillText(['M','N','K'][i],q[0]+8,q[1]-7)})
 }
 function render(){
  ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
@@ -419,12 +509,14 @@ function render(){
  if(faces.checked&&model.faces){model.faces.slice().sort((a,b)=>faceDepth(a)-faceDepth(b)).forEach(drawFace)}
  const selectedSet=new Set(selectedLines), order=model.edges.map((e,i)=>({i,z:(rotate(model.points[e[0]])[2]+rotate(model.points[e[1]])[2])/2})).sort((a,b)=>a.z-b.z);
  order.forEach(({i})=>{
-  let alpha=focus.checked&&!selectedSet.has(i)?.18:1,width=model.curved?1.05:1.15,color='#a6b4c9';
-  if(i===hoverEdge){color='#7c8cab';width=2}
+  let alpha=model.curved ? .78 : (focus.checked&&!selectedSet.has(i)?.18:1);
+  let width=model.curved?1.0:1.15;
+  let color=model.curved?'#aebbd0':'#a6b4c9';
+  if(!model.curved && i===hoverEdge){color='#7c8cab';width=2}
   drawEdge(i,color,width,alpha)
  });
- if(selectedLines[0]!=null)drawEdge(selectedLines[0],'#d65262',2.15,1);
- if(selectedLines[1]!=null)drawEdge(selectedLines[1],'#4166e8',2.15,1);
+ if(!model.curved && selectedLines[0]!=null)drawEdge(selectedLines[0],'#f39a18',2.15,1);
+ if(!model.curved && selectedLines[1]!=null)drawEdge(selectedLines[1],'#1769e0',2.15,1);
  const sec=getSection();if(sec)drawSectionData(sec);
  drawSectionPoints();
  if(!model.curved)Object.entries(model.points).forEach(([n,p])=>drawVertex(n,p));
@@ -443,7 +535,7 @@ function relation(i,j){
 function updateLineInfo(){
  syncLineSelectsFromModel();
  if(model.curved){
-   infoBox.innerHTML='<b>'+model.name+'</b>Для тела вращения сейчас работает пространственный просмотр.';
+   infoBox.innerHTML='<b>'+model.name+'</b>Вращай и масштабируй модель для пространственного просмотра.';
    return;
  }
  if(selectedLines.length<2){
@@ -463,6 +555,10 @@ function updateLineInfo(){
  }
 }
 function updateSectionList(){
+ if(model.curved){
+   sectionList.textContent='Для тел вращения этот инструмент отключён.';
+   return;
+ }
  if(!sectionPts.length)sectionList.textContent='Точки не заданы.';
  else sectionList.textContent=sectionPts.map((p,i)=>['M','N','K'][i]+' на '+edgeName(p.edge)).join(' • ');
 }
@@ -481,9 +577,12 @@ canvas.addEventListener('mousemove',e=>{
    const sp=sectionPts[dragPoint],ed=model.edges[sp.edge],res=screenDistToSeg(x,y,model.points[ed[0]],model.points[ed[1]]);sp.t=res.t;render();return
  }
  if(dragging&&(tool==='rotate'||tool==='section')){rotY+=(e.clientX-lastX)*.01;rotX+=(e.clientY-lastY)*.01;lastX=e.clientX;lastY=e.clientY;render();return}
- if(tool==='lines'||tool==='section'){
+ if(!model.curved && (tool==='lines'||tool==='section')){
    const p=pickEdge(x,y,14);hoverEdge=p?p.i:-1;hoverHint.textContent=p?('Ребро '+edgeName(p.i)):'Наведи на ребро';render()
- } else {hoverEdge=-1}
+ } else {
+   hoverEdge=-1;
+   hoverHint.textContent=model.curved?'Вращай модель мышью':'Наведи на ребро';
+ }
 });
 canvas.addEventListener('mousedown',e=>{
  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
@@ -537,17 +636,20 @@ canvas.addEventListener('wheel',e=>{
 modelSelect.addEventListener('change',e=>setModel(e.target.value));
 
 line1Select.addEventListener('change',()=>{
+ if(model.curved) return;
  selectedLines[0]=+line1Select.value;
  if(selectedLines.length<2) selectedLines[1]=+line2Select.value;
  tool='rotate';setToolUI();updateLineInfo();render();
 });
 line2Select.addEventListener('change',()=>{
+ if(model.curved) return;
  if(selectedLines.length<1) selectedLines[0]=+line1Select.value;
  selectedLines[1]=+line2Select.value;
  tool='rotate';setToolUI();updateLineInfo();render();
 });
 
 pickLinesBtn.addEventListener('click',()=>{
+ if(model.curved) return;
  selectedLines=[];
  setTool('lines');
  updateLineInfo();
@@ -555,6 +657,7 @@ pickLinesBtn.addEventListener('click',()=>{
 });
 
 document.getElementById('clearLinesBtn').addEventListener('click',()=>{
+ if(model.curved) return;
  selectedLines=[];
  tool='rotate';setToolUI();
  lineStatus.textContent='Выделение снято.';
@@ -563,9 +666,7 @@ document.getElementById('clearLinesBtn').addEventListener('click',()=>{
 });
 
 startSectionBtn.addEventListener('click',()=>{
- if(model.curved){
-   tool='section';setToolUI();return;
- }
+ if(model.curved) return;
  if(sectionPts.length>=3) sectionPts=[];
  setTool('section');
  updateSectionList();
