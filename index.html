@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Геометрия — доска учителя v3</title>
+<style>
+:root{
+  --bg:#eef3f9;--panel:#ffffff;--text:#182133;--muted:#69768b;--line:#dce4ef;
+  --accent:#5367f5;--red:#d65262;--blue:#4166e8;--orange:#e5961d;--green:#16845d;
+  --shadow:0 12px 32px rgba(25,40,75,.09);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.app{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px;min-height:100vh}
+.panel,.stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.panel{padding:14px;overflow:auto;max-height:calc(100vh - 24px);position:sticky;top:12px}
+.stage{padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+h1{font-size:21px;margin:0 0 3px}
+h2{font-size:15px;margin:0 0 8px}
+.small{font-size:12.5px;color:var(--muted);line-height:1.45}
+.group{border-top:1px solid #e9eef5;padding-top:12px;margin-top:12px}
+select,button,input{font:inherit}
+select{width:100%;padding:8px 9px;border:1px solid #cfd8e6;border-radius:9px;background:#fff}
+button{border:0;border-radius:9px;padding:9px 10px;font-weight:760;cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:#eef2f7;color:#26324a}
+.ghost{background:#fff;border:1px solid #cad5e6;color:#26324a}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.check{display:flex;align-items:center;gap:8px;font-size:12.8px;margin:6px 0}
+.check input{width:16px;height:16px}
+.zoom-box{margin-top:10px;padding:9px;border:1px solid #e0e7f0;border-radius:11px;background:#fafbfd}
+.zoom-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12.5px;font-weight:750}
+.zoom-value{color:#4252bd;min-width:46px;text-align:right}
+.zoom-actions{display:grid;grid-template-columns:44px 1fr 44px;gap:6px;margin-top:7px}
+.zoom-actions button{padding:7px 6px}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool{background:#f4f6fa;color:#2b3852;border:1px solid transparent;min-height:42px;font-size:13px}
+.tool.active{background:#e9edff;color:#3544bd;border:1px solid #9aa8ff}
+.line-pick.active{background:#e9edff;color:#3544bd;border:1px solid #9aa8ff}
+.section-start{width:100%;background:#fff5df;border:1px solid #efcc83;color:#815100;font-size:14px}
+.section-start.active{background:#ffe8b2;border-color:#e1ad3d}
+.stage-callout{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(24,32,51,.92);color:#fff;border-radius:12px;padding:10px 14px;
+  font-size:14px;font-weight:750;box-shadow:0 8px 18px rgba(0,0,0,.14);display:none;z-index:5
+}
+.stage-callout.show{display:block}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mode{font-size:12.5px;font-weight:800;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#3947b8}
+.canvas-wrap{position:relative;flex:1;min-height:800px;border:1px solid #dce5f3;border-radius:16px;overflow:hidden;
+background:radial-gradient(circle at 50% 32%,#fff 0,#f4f7fb 72%,#eaf0f7 100%)}
+canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas.selecting{cursor:crosshair}
+.info{
+  position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,.94);border:1px solid #dce4ef;border-radius:12px;
+  padding:10px 12px;max-width:420px;font-size:13.5px;box-shadow:0 7px 18px rgba(20,35,70,.06)
+}
+.info b{display:block;margin-bottom:3px;font-size:14px}
+.hint{
+  position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.9);border:1px solid #e0e6ef;border-radius:12px;
+  padding:8px 10px;font-size:12px;color:#536078
+}
+.back-btn{position:fixed;right:18px;top:18px;z-index:30;background:#172033;color:#fff;padding:11px 16px;border-radius:11px;
+display:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.student .panel{display:none}
+.student .app{grid-template-columns:1fr;padding:0}
+.student .stage{border:0;border-radius:0;min-height:100vh;padding:0}
+.student .topbar{display:none}
+.student .canvas-wrap{border:0;border-radius:0;min-height:100vh}
+.student .back-btn{display:block}
+.student .hint{display:none}
+.badge{display:inline-block;font-size:10.5px;font-weight:800;padding:4px 7px;border-radius:999px;background:#eef2ff;color:#3b49bc;margin-bottom:7px}
+.status{padding:8px 9px;border-radius:10px;background:#f7f9fc;border:1px solid #e2e8f1;font-size:12.5px;line-height:1.4}
+.section-list{font-size:12px;color:#556279;margin-top:7px}
+@media(max-width:980px){.app{grid-template-columns:1fr}.panel{position:static;max-height:none}.canvas-wrap{min-height:650px}}
+</style>
+</head>
+<body>
+<button id="backBtn" class="back-btn">← К настройкам</button>
+
+<div class="app">
+<aside class="panel">
+  <div class="badge">Версия 3</div>
+  <h1>3D Геометрия</h1>
+  <div class="small">Выбери инструмент и работай прямо на модели.</div>
+
+  <div class="group">
+    <h2>Фигура</h2>
+    <select id="modelSelect"></select>
+    <div class="row" style="margin-top:7px">
+      <button id="resetView" class="secondary">Сбросить вид</button>
+      <button id="studentMode" class="primary">Показ ученикам</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Прямые</h2>
+    <label>Первая прямая</label>
+    <select id="line1Select"></select>
+    <label>Вторая прямая</label>
+    <select id="line2Select"></select>
+
+    <div class="row" style="margin-top:8px">
+      <button id="pickLinesBtn" class="secondary line-pick">Выбрать на модели</button>
+      <button id="clearLinesBtn" class="ghost">Снять выделение</button>
+    </div>
+
+    <div id="lineStatus" class="status" style="margin-top:8px">
+      Можно выбрать прямые из списка или щёлкнуть по рёбрам на модели.
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Вид</h2>
+
+    <div class="zoom-box">
+      <div class="zoom-head">
+        <span>Масштаб рисунка</span>
+        <span id="zoomValue" class="zoom-value">100%</span>
+      </div>
+      <input id="zoomRange" type="range" min="60" max="220" step="5" value="100" style="width:100%">
+      <div class="zoom-actions">
+        <button id="zoomOutBtn" class="secondary" type="button">−</button>
+        <button id="zoomResetBtn" class="ghost" type="button">100%</button>
+        <button id="zoomInBtn" class="secondary" type="button">+</button>
+      </div>
+    </div>
+
+    <div class="check"><input id="labels" type="checkbox"><span>Подписи вершин</span></div>
+    <div class="check"><input id="faces" type="checkbox" checked><span>Лёгкая заливка граней</span></div>
+    <div class="check"><input id="focus" type="checkbox"><span>Приглушить лишнее</span></div>
+    <div class="check"><input id="autorotate" type="checkbox"><span>Автоповорот</span></div>
+  </div>
+
+  <div class="group" id="sectionBlock">
+    <h2>Сечение</h2>
+    <div class="small">Поставь три точки прямо на рёбрах фигуры. После третьей точки сечение построится автоматически.</div>
+    <button id="startSectionBtn" class="section-start" style="margin-top:8px">✂ Начать построение сечения</button>
+    <div class="check"><input id="showPlane" type="checkbox"><span>Секущая плоскость</span></div>
+    <div class="check"><input id="showSection" type="checkbox" checked><span>Многоугольник сечения</span></div>
+    <div id="sectionList" class="section-list">Точки не заданы.</div>
+    <button id="clearSectionBtn" class="ghost" style="width:100%;margin-top:8px">Очистить сечение</button>
+  </div>
+</aside>
+
+<main class="stage">
+  <div class="topbar">
+    <div id="modeLabel" class="mode">Режим учителя</div>
+    <div class="small">мышь: вращение • колёсико: масштаб • инструмент «Сечение»: точки на рёбрах</div>
+  </div>
+
+  <div id="canvasWrap" class="canvas-wrap">
+    <div id="stageCallout" class="stage-callout"></div>
+    <canvas id="canvas"></canvas>
+    <div id="infoBox" class="info"><b>Готово</b>Выбери инструмент слева.</div>
+    <div id="hoverHint" class="hint">Наведи на ребро</div>
+  </div>
+</main>
+</div>
+
+<script>
+const poly = {
+ cube:{
+  name:'Куб',
+  points:{A:[-1,-1,-1],B:[1,-1,-1],C:[1,1,-1],D:[-1,1,-1],A1:[-1,-1,1],B1:[1,-1,1],C1:[1,1,1],D1:[-1,1,1]},
+  edges:[['A','B'],['B','C'],['C','D'],['D','A'],['A1','B1'],['B1','C1'],['C1','D1'],['D1','A1'],['A','A1'],['B','B1'],['C','C1'],['D','D1']],
+  faces:[['A','B','C','D'],['A1','B1','C1','D1'],['A','B','B1','A1'],['B','C','C1','B1'],['C','D','D1','C1'],['D','A','A1','D1']]
+ },
+ box:{
+  name:'Прямоугольный параллелепипед',
+  points:{A:[-1.45,-.85,-1],B:[1.45,-.85,-1],C:[1.45,.85,-1],D:[-1.45,.85,-1],A1:[-1.45,-.85,1],B1:[1.45,-.85,1],C1:[1.45,.85,1],D1:[-1.45,.85,1]},
+  edges:[['A','B'],['B','C'],['C','D'],['D','A'],['A1','B1'],['B1','C1'],['C1','D1'],['D1','A1'],['A','A1'],['B','B1'],['C','C1'],['D','D1']],
+  faces:[['A','B','C','D'],['A1','B1','C1','D1'],['A','B','B1','A1'],['B','C','C1','B1'],['C','D','D1','C1'],['D','A','A1','D1']]
+ },
+ tetra:{
+  name:'Тетраэдр',
+  points:{A:[-1.25,-1,-1],B:[1.25,-1,-1],C:[0,1.15,-1],D:[.14,-.08,1.35]},
+  edges:[['A','B'],['B','C'],['C','A'],['A','D'],['B','D'],['C','D']],
+  faces:[['A','B','C'],['A','B','D'],['B','C','D'],['C','A','D']]
+ },
+ prism:{
+  name:'Треугольная призма',
+  points:{A:[-1.2,-1,-1],B:[1.2,-1,-1],C:[0,1.08,-1],A1:[-1.2,-1,1],B1:[1.2,-1,1],C1:[0,1.08,1]},
+  edges:[['A','B'],['B','C'],['C','A'],['A1','B1'],['B1','C1'],['C1','A1'],['A','A1'],['B','B1'],['C','C1']],
+  faces:[['A','B','C'],['A1','B1','C1'],['A','B','B1','A1'],['B','C','C1','B1'],['C','A','A1','C1']]
+ },
+ pyramid:{
+  name:'Четырёхугольная пирамида',
+  points:{A:[-1.25,-1,-1],B:[1.25,-1,-1],C:[1.25,1,-1],D:[-1.25,1,-1],S:[0,0,1.5]},
+  edges:[['A','B'],['B','C'],['C','D'],['D','A'],['A','S'],['B','S'],['C','S'],['D','S']],
+  faces:[['A','B','C','D'],['A','B','S'],['B','C','S'],['C','D','S'],['D','A','S']]
+ },
+ octa:{
+  name:'Октаэдр',
+  points:{A:[1.3,0,0],B:[0,1.3,0],C:[-1.3,0,0],D:[0,-1.3,0],S:[0,0,1.4],T:[0,0,-1.4]},
+  edges:[['A','B'],['B','C'],['C','D'],['D','A'],['S','A'],['S','B'],['S','C'],['S','D'],['T','A'],['T','B'],['T','C'],['T','D']],
+  faces:[['S','A','B'],['S','B','C'],['S','C','D'],['S','D','A'],['T','A','B'],['T','B','C'],['T','C','D'],['T','D','A']]
+ }
+};
+
+function regularPrism(n,name){
+ const points={},edges=[],faces=[],r=1.08;
+ for(let i=0;i<n;i++){let a=-Math.PI/2+i*2*Math.PI/n;points['A'+i]=[r*Math.cos(a),r*Math.sin(a),-1];points['B'+i]=[r*Math.cos(a),r*Math.sin(a),1]}
+ for(let i=0;i<n;i++){edges.push(['A'+i,'A'+((i+1)%n)],['B'+i,'B'+((i+1)%n)],['A'+i,'B'+i]);faces.push(['A'+i,'A'+((i+1)%n),'B'+((i+1)%n),'B'+i])}
+ faces.push([...Array(n)].map((_,i)=>'A'+i),[...Array(n)].map((_,i)=>'B'+i));
+ return {name,points,edges,faces}
+}
+poly.hexprism=regularPrism(6,'Шестиугольная призма');
+
+function revolution(kind){
+ const n=36, points={},edges=[],curves=[];
+ if(kind==='cylinder'){
+   for(let i=0;i<n;i++){const a=i*2*Math.PI/n;points['A'+i]=[Math.cos(a),Math.sin(a),-1];points['B'+i]=[Math.cos(a),Math.sin(a),1]}
+   for(let i=0;i<n;i++){edges.push(['A'+i,'A'+((i+1)%n)],['B'+i,'B'+((i+1)%n)]);if(i%6===0)edges.push(['A'+i,'B'+i])}
+   return {name:'Цилиндр',points,edges,curved:true,kind:'cylinder'}
+ }
+ if(kind==='cone'){
+   points.S=[0,0,1.5];
+   for(let i=0;i<n;i++){const a=i*2*Math.PI/n;points['A'+i]=[1.08*Math.cos(a),1.08*Math.sin(a),-1]}
+   for(let i=0;i<n;i++){edges.push(['A'+i,'A'+((i+1)%n)]);if(i%6===0)edges.push(['A'+i,'S'])}
+   return {name:'Конус',points,edges,curved:true,kind:'cone'}
+ }
+ if(kind==='frustum'){
+   for(let i=0;i<n;i++){const a=i*2*Math.PI/n;points['A'+i]=[1.12*Math.cos(a),1.12*Math.sin(a),-1];points['B'+i]=[.62*Math.cos(a),.62*Math.sin(a),1]}
+   for(let i=0;i<n;i++){edges.push(['A'+i,'A'+((i+1)%n)],['B'+i,'B'+((i+1)%n)]);if(i%6===0)edges.push(['A'+i,'B'+i])}
+   return {name:'Усечённый конус',points,edges,curved:true,kind:'frustum'}
+ }
+ if(kind==='sphere'){
+   // lat-long wireframe
+   let id=0;
+   const rings=[];
+   for(let lat=-60;lat<=60;lat+=30){
+     const rr=Math.cos(lat*Math.PI/180), z=Math.sin(lat*Math.PI/180), names=[];
+     for(let i=0;i<n;i++){const a=i*2*Math.PI/n,name='P'+(id++);points[name]=[rr*Math.cos(a),rr*Math.sin(a),z];names.push(name)}
+     rings.push(names);for(let i=0;i<n;i++)edges.push([names[i],names[(i+1)%n]])
+   }
+   for(let m=0;m<6;m++){
+     let prev=null;
+     for(let lat=-90;lat<=90;lat+=15){
+       const rr=Math.cos(lat*Math.PI/180), z=Math.sin(lat*Math.PI/180),a=m*Math.PI/3,name='M'+(id++);points[name]=[rr*Math.cos(a),rr*Math.sin(a),z];
+       if(prev)edges.push([prev,name]);prev=name;
+     }
+   }
+   return {name:'Сфера',points,edges,curved:true,kind:'sphere'}
+ }
+}
+const models={...poly,cylinder:revolution('cylinder'),cone:revolution('cone'),frustum:revolution('frustum'),sphere:revolution('sphere')};
+
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const wrap=document.getElementById('canvasWrap');
+const modelSelect=document.getElementById('modelSelect'),infoBox=document.getElementById('infoBox'),toolStatus=document.getElementById('toolStatus');
+const labels=document.getElementById('labels'),faces=document.getElementById('faces'),focus=document.getElementById('focus'),autorotate=document.getElementById('autorotate');
+const zoomRange=document.getElementById('zoomRange'),zoomValue=document.getElementById('zoomValue');
+const showPlane=document.getElementById('showPlane'),showSection=document.getElementById('showSection'),sectionList=document.getElementById('sectionList');
+const hoverHint=document.getElementById('hoverHint');
+const stageCallout=document.getElementById('stageCallout');
+const line1Select=document.getElementById('line1Select'),line2Select=document.getElementById('line2Select');
+const pickLinesBtn=document.getElementById('pickLinesBtn'),lineStatus=document.getElementById('lineStatus');
+const startSectionBtn=document.getElementById('startSectionBtn');
+
+let modelKey='cube',model=models[modelKey],tool='rotate',rotX=-18*Math.PI/180,rotY=28*Math.PI/180,zoom=1;
+let selectedLines=[],hoverEdge=-1,sectionPts=[],dragging=false,dragPoint=-1,lastX=0,lastY=0,autoLoop=false,student=false;
+
+function pretty(s){return s.replace(/1/g,'₁')}
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]]}
+function add(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]]}
+function mul(a,s){return[a[0]*s,a[1]*s,a[2]*s]}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function norm(a){return Math.sqrt(dot(a,a))}
+function normalize(a){let n=norm(a)||1;return[a[0]/n,a[1]/n,a[2]/n]}
+
+function rotate([x,y,z]){
+ const cy=Math.cos(rotY),sy=Math.sin(rotY),cx=Math.cos(rotX),sx=Math.sin(rotX);
+ const x1=x*cy+z*sy,z1=-x*sy+z*cy;
+ return[x1,y*cx-z1*sx,y*sx+z1*cx]
+}
+function project(p){
+ const [x,y,z]=rotate(p),w=canvas.clientWidth,h=canvas.clientHeight,depth=5.8,scale=Math.min(w,h)*.40*zoom,f=scale/(z+depth);
+ return[w/2+x*f,h/2-y*f,z]
+}
+function screenDistToSeg(px,py,a,b){
+ const A=project(a),B=project(b),vx=B[0]-A[0],vy=B[1]-A[1],wx=px-A[0],wy=py-A[1],den=vx*vx+vy*vy||1;
+ let t=(wx*vx+wy*vy)/den;t=Math.max(0,Math.min(1,t));
+ const x=A[0]+t*vx,y=A[1]+t*vy;return{d:Math.hypot(px-x,py-y),t}
+}
+function edgePoint(edgeIndex,t){
+ const e=model.edges[edgeIndex],a=model.points[e[0]],b=model.points[e[1]];return add(a,mul(sub(b,a),t))
+}
+function edgeName(i){const e=model.edges[i];return pretty(e[0])+pretty(e[1])}
+
+function fillModels(){
+ modelSelect.innerHTML='';Object.keys(models).forEach(k=>modelSelect.add(new Option(models[k].name,k)));modelSelect.value=modelKey;
+}
+
+function fillLineSelects(){
+ line1Select.innerHTML='';
+ line2Select.innerHTML='';
+ model.edges.forEach((e,i)=>{
+   const name=edgeName(i);
+   line1Select.add(new Option(name,i));
+   line2Select.add(new Option(name,i));
+ });
+ if(model.edges.length>1){
+   line1Select.value='0';
+   line2Select.value='1';
+   selectedLines=[0,1];
+ }else{
+   line1Select.value='0';
+   line2Select.value='0';
+   selectedLines=[0];
+ }
+ updateLineInfo();
+}
+function syncLineSelectsFromModel(){
+ if(selectedLines[0]!=null) line1Select.value=String(selectedLines[0]);
+ if(selectedLines[1]!=null) line2Select.value=String(selectedLines[1]);
+}
+function setModel(k){
+ modelKey=k;model=models[k];selectedLines=[];sectionPts=[];hoverEdge=-1;tool='rotate';
+ fillLineSelects();
+ setToolUI();
+ render();
+ updateSectionList();
+}
+function setTool(t){
+ tool=t;
+ setToolUI();
+}
+
+function setToolUI(){
+ canvas.classList.toggle('selecting',tool==='lines'||tool==='section');
+ pickLinesBtn.classList.toggle('active',tool==='lines');
+ startSectionBtn.classList.toggle('active',tool==='section');
+ stageCallout.classList.remove('show');
+
+ if(tool==='lines'){
+   lineStatus.textContent='Щёлкни по первой, затем по второй прямой.';
+   stageCallout.textContent=selectedLines.length===1?'Выберите вторую прямую':'Выберите первую прямую';
+   stageCallout.classList.add('show');
+ }else{
+   lineStatus.textContent='Можно выбрать прямые из списка или щёлкнуть по рёбрам на модели.';
+ }
+
+ if(tool==='section'){
+   if(model.curved){
+     stageCallout.textContent='Для тел вращения сечения будут отдельным режимом';
+   }else if(sectionPts.length===0){
+     stageCallout.textContent='Сечение: выберите первое ребро';
+   }else if(sectionPts.length===1){
+     stageCallout.textContent='Сечение: выберите второе ребро';
+   }else if(sectionPts.length===2){
+     stageCallout.textContent='Сечение: выберите третье ребро';
+   }else{
+     stageCallout.textContent='Сечение построено — точки можно двигать';
+   }
+   stageCallout.classList.add('show');
+ }
+}
+
+function faceDepth(face){return face.reduce((s,n)=>s+rotate(model.points[n])[2],0)/face.length}
+function drawFace(face){
+ const pts=face.map(n=>project(model.points[n]));
+ ctx.save();ctx.globalAlpha=.06;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#7a8fb8';ctx.fill();ctx.restore()
+}
+function drawEdge(i,color='#a7b4c8',width=1.2,alpha=1){
+ const e=model.edges[i],a=project(model.points[e[0]]),b=project(model.points[e[1]]);
+ ctx.save();ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();ctx.restore()
+}
+function drawVertex(name,p){
+ if(model.curved)return;const q=project(p);ctx.beginPath();ctx.arc(q[0],q[1],2.7,0,Math.PI*2);ctx.fillStyle='#253047';ctx.fill();
+ if(labels.checked){ctx.font='600 12px Inter';ctx.fillStyle='#334056';ctx.fillText(pretty(name),q[0]+5,q[1]-5)}
+}
+function drawRevolutionSoft(){
+ // soft body hints for nicer appearance
+ if(!model.curved)return;
+ ctx.save();
+ if(model.kind==='sphere'){
+   const c=project([0,0,0]),r=Math.min(canvas.clientWidth,canvas.clientHeight)*.40*zoom/5.8;
+   const grad=ctx.createRadialGradient(c[0]-r*.35,c[1]-r*.35,r*.08,c[0],c[1],r);
+   grad.addColorStop(0,'rgba(115,145,205,.10)');grad.addColorStop(1,'rgba(115,145,205,.02)');
+   ctx.fillStyle=grad;ctx.beginPath();ctx.arc(c[0],c[1],r*.98,0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
+}
+function drawSectionData(sec){
+ const q=sec.points.map(project);
+ if(showPlane.checked){
+  const c=sec.center,n=sec.normal,u=normalize(Math.abs(n[0])<.8?cross(n,[1,0,0]):cross(n,[0,1,0])),v=normalize(cross(n,u)),s=1.8;
+  const pp=[add(c,add(mul(u,s),mul(v,s))),add(c,add(mul(u,-s),mul(v,s))),add(c,add(mul(u,-s),mul(v,-s))),add(c,add(mul(u,s),mul(v,-s)))].map(project);
+  ctx.save();ctx.globalAlpha=.12;ctx.beginPath();ctx.moveTo(pp[0][0],pp[0][1]);pp.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fillStyle='#745cff';ctx.fill();ctx.restore()
+ }
+ if(showSection.checked){
+  ctx.save();ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);q.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.closePath();
+  ctx.fillStyle='rgba(234,155,28,.12)';ctx.fill();ctx.strokeStyle='#df941b';ctx.lineWidth=2;ctx.stroke();ctx.restore()
+ }
+}
+function getSection(){
+ if(model.curved||sectionPts.length<3)return null;
+ const p1=edgePoint(sectionPts[0].edge,sectionPts[0].t),p2=edgePoint(sectionPts[1].edge,sectionPts[1].t),p3=edgePoint(sectionPts[2].edge,sectionPts[2].t);
+ const n=cross(sub(p2,p1),sub(p3,p1));if(norm(n)<1e-7)return null;const nn=normalize(n),d=dot(nn,p1),ints=[];
+ model.edges.forEach(e=>{
+  const a=model.points[e[0]],b=model.points[e[1]],fa=dot(nn,a)-d,fb=dot(nn,b)-d;
+  if(Math.abs(fa)<1e-8)ints.push(a);
+  if(fa*fb<0||Math.abs(fb)<1e-8){const den=fa-fb;if(Math.abs(den)>1e-9){const t=fa/den;if(t>=-1e-8&&t<=1+1e-8)ints.push(add(a,mul(sub(b,a),t)))}}
+ });
+ const u=[];ints.forEach(p=>{if(!u.some(q=>norm(sub(p,q))<1e-5))u.push(p)});if(u.length<3)return null;
+ const c=u.reduce((s,p)=>add(s,p),[0,0,0]).map(x=>x/u.length),ax1=normalize(sub(u[0],c)),ax2=normalize(cross(nn,ax1));
+ u.sort((a,b)=>Math.atan2(dot(sub(a,c),ax2),dot(sub(a,c),ax1))-Math.atan2(dot(sub(b,c),ax2),dot(sub(b,c),ax1)));
+ return{points:u,center:c,normal:nn}
+}
+function drawSectionPoints(){
+ sectionPts.forEach((sp,i)=>{const q=project(edgePoint(sp.edge,sp.t));ctx.beginPath();ctx.arc(q[0],q[1],6,0,Math.PI*2);ctx.fillStyle='#e4961b';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.font='700 12px Inter';ctx.fillStyle='#a65f00';ctx.fillText(['M','N','K'][i],q[0]+8,q[1]-7)})
+}
+function render(){
+ ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+ drawRevolutionSoft();
+ if(faces.checked&&model.faces){model.faces.slice().sort((a,b)=>faceDepth(a)-faceDepth(b)).forEach(drawFace)}
+ const selectedSet=new Set(selectedLines), order=model.edges.map((e,i)=>({i,z:(rotate(model.points[e[0]])[2]+rotate(model.points[e[1]])[2])/2})).sort((a,b)=>a.z-b.z);
+ order.forEach(({i})=>{
+  let alpha=focus.checked&&!selectedSet.has(i)?.18:1,width=model.curved?1.05:1.15,color='#a6b4c9';
+  if(i===hoverEdge){color='#7c8cab';width=2}
+  drawEdge(i,color,width,alpha)
+ });
+ if(selectedLines[0]!=null)drawEdge(selectedLines[0],'#d65262',2.15,1);
+ if(selectedLines[1]!=null)drawEdge(selectedLines[1],'#4166e8',2.15,1);
+ const sec=getSection();if(sec)drawSectionData(sec);
+ drawSectionPoints();
+ if(!model.curved)Object.entries(model.points).forEach(([n,p])=>drawVertex(n,p));
+ if(autorotate.checked&&!autoLoop){autoLoop=true;requestAnimationFrame(loop)}
+}
+function loop(){if(!autorotate.checked){autoLoop=false;return}rotY+=.007;render();requestAnimationFrame(loop)}
+
+function relation(i,j){
+ if(i===j)return['Совпадающие','Выбрано одно и то же ребро.'];
+ const e1=model.edges[i],e2=model.edges[j],p1=model.points[e1[0]],p2=model.points[e1[1]],q1=model.points[e2[0]],q2=model.points[e2[1]];
+ const u=sub(p2,p1),v=sub(q2,q1),w=sub(q1,p1),c=cross(u,v);
+ if(norm(c)<1e-7)return['Параллельные','Они лежат в одной плоскости и не пересекаются.'];
+ if(Math.abs(dot(w,c))<1e-7)return['Пересекающиеся','У этих прямых есть общая точка.'];
+ return['Скрещивающиеся','Они не пересекаются и не лежат в одной плоскости.'];
+}
+function updateLineInfo(){
+ syncLineSelectsFromModel();
+ if(model.curved){
+   infoBox.innerHTML='<b>'+model.name+'</b>Для тела вращения сейчас работает пространственный просмотр.';
+   return;
+ }
+ if(selectedLines.length<2){
+   infoBox.innerHTML='<b>Прямые</b>Выбери две прямые.';
+   if(tool==='lines'){
+     stageCallout.textContent=selectedLines.length===0?'Выберите первую прямую':'Теперь выберите вторую прямую';
+     stageCallout.classList.add('show');
+   }
+   return;
+ }
+ const r=relation(selectedLines[0],selectedLines[1]);
+ infoBox.innerHTML='<b>'+edgeName(selectedLines[0])+' и '+edgeName(selectedLines[1])+' — '+r[0].toLowerCase()+'</b>'+r[1];
+ lineStatus.textContent=edgeName(selectedLines[0])+' и '+edgeName(selectedLines[1])+' — '+r[0].toLowerCase()+'.';
+ if(tool==='lines'){
+   stageCallout.textContent='Готово: '+r[0];
+   stageCallout.classList.add('show');
+ }
+}
+function updateSectionList(){
+ if(!sectionPts.length)sectionList.textContent='Точки не заданы.';
+ else sectionList.textContent=sectionPts.map((p,i)=>['M','N','K'][i]+' на '+edgeName(p.edge)).join(' • ');
+}
+function pickEdge(x,y,max=12){
+ let best={i:-1,d:1e9,t:.5};model.edges.forEach((e,i)=>{const r=screenDistToSeg(x,y,model.points[e[0]],model.points[e[1]]);if(r.d<best.d)best={i,d:r.d,t:r.t}});
+ return best.d<=max?best:null;
+}
+function pickSectionPoint(x,y,max=12){
+ let best=-1,bd=1e9;sectionPts.forEach((sp,i)=>{const q=project(edgePoint(sp.edge,sp.t)),d=Math.hypot(x-q[0],y-q[1]);if(d<bd){bd=d;best=i}});
+ return bd<=max?best:-1;
+}
+
+canvas.addEventListener('mousemove',e=>{
+ const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ if(dragPoint>=0){
+   const sp=sectionPts[dragPoint],ed=model.edges[sp.edge],res=screenDistToSeg(x,y,model.points[ed[0]],model.points[ed[1]]);sp.t=res.t;render();return
+ }
+ if(dragging&&(tool==='rotate'||tool==='section')){rotY+=(e.clientX-lastX)*.01;rotX+=(e.clientY-lastY)*.01;lastX=e.clientX;lastY=e.clientY;render();return}
+ if(tool==='lines'||tool==='section'){
+   const p=pickEdge(x,y,14);hoverEdge=p?p.i:-1;hoverHint.textContent=p?('Ребро '+edgeName(p.i)):'Наведи на ребро';render()
+ } else {hoverEdge=-1}
+});
+canvas.addEventListener('mousedown',e=>{
+ const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ if(tool==='section'&&!model.curved){
+   const pp=pickSectionPoint(x,y);
+   if(pp>=0){dragPoint=pp;return}
+   const p=pickEdge(x,y,14);
+   if(p&&sectionPts.length<3){
+      sectionPts.push({edge:p.i,t:p.t});
+      updateSectionList();
+      if(sectionPts.length===1) stageCallout.textContent='Теперь выберите второе ребро';
+      if(sectionPts.length===2) stageCallout.textContent='Теперь выберите третье ребро';
+      if(sectionPts.length===3){
+        stageCallout.textContent='Сечение построено — точки можно двигать';
+        infoBox.innerHTML='<b>Сечение построено</b>Перетаскивай M, N и K вдоль рёбер. Чтобы повернуть фигуру, тяни мышью за пустое место.';
+      }
+      stageCallout.classList.add('show');
+      render();
+      return;
+   }
+   dragging=true;lastX=e.clientX;lastY=e.clientY;
+   return
+ }
+ if(tool==='lines'){
+   const p=pickEdge(x,y,14);
+   if(p){
+     if(selectedLines.includes(p.i)){
+       selectedLines=selectedLines.filter(v=>v!==p.i);
+     }else{
+       if(selectedLines.length>=2)selectedLines=[];
+       selectedLines.push(p.i);
+     }
+     updateLineInfo();
+     render();
+     if(selectedLines.length===2){
+       setTimeout(()=>{tool='rotate';setToolUI();},350);
+     }
+   }
+   return
+ }
+ dragging=true;lastX=e.clientX;lastY=e.clientY
+});
+window.addEventListener('mouseup',()=>{dragging=false;dragPoint=-1});
+canvas.addEventListener('mouseleave',()=>{hoverEdge=-1;render()});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const current=Math.round(zoom*100);
+  setZoom(current+(e.deltaY<0?10:-10));
+},{passive:false});
+
+modelSelect.addEventListener('change',e=>setModel(e.target.value));
+
+line1Select.addEventListener('change',()=>{
+ selectedLines[0]=+line1Select.value;
+ if(selectedLines.length<2) selectedLines[1]=+line2Select.value;
+ tool='rotate';setToolUI();updateLineInfo();render();
+});
+line2Select.addEventListener('change',()=>{
+ if(selectedLines.length<1) selectedLines[0]=+line1Select.value;
+ selectedLines[1]=+line2Select.value;
+ tool='rotate';setToolUI();updateLineInfo();render();
+});
+
+pickLinesBtn.addEventListener('click',()=>{
+ selectedLines=[];
+ setTool('lines');
+ updateLineInfo();
+ render();
+});
+
+document.getElementById('clearLinesBtn').addEventListener('click',()=>{
+ selectedLines=[];
+ tool='rotate';setToolUI();
+ lineStatus.textContent='Выделение снято.';
+ infoBox.innerHTML='<b>Прямые</b>Выбери две прямые из списков или нажми «Выбрать на модели».';
+ render();
+});
+
+startSectionBtn.addEventListener('click',()=>{
+ if(model.curved){
+   tool='section';setToolUI();return;
+ }
+ if(sectionPts.length>=3) sectionPts=[];
+ setTool('section');
+ updateSectionList();
+ render();
+});
+
+document.getElementById('clearSectionBtn').addEventListener('click',()=>{
+ sectionPts=[];
+ tool='rotate';setToolUI();updateSectionList();
+ infoBox.innerHTML='<b>Сечение очищено</b>Можно построить новое.';
+ render();
+});
+[labels,faces,focus,showPlane,showSection].forEach(el=>el.addEventListener('change',render));
+autorotate.addEventListener('change',render);
+document.getElementById('resetView').addEventListener('click',()=>{rotX=-18*Math.PI/180;rotY=28*Math.PI/180;setZoom(100)});
+zoomRange.addEventListener('input',()=>setZoom(+zoomRange.value));
+document.getElementById('zoomOutBtn').addEventListener('click',()=>setZoom(Math.round(zoom*100)-10));
+document.getElementById('zoomInBtn').addEventListener('click',()=>setZoom(Math.round(zoom*100)+10));
+document.getElementById('zoomResetBtn').addEventListener('click',()=>setZoom(100));
+
+document.getElementById('studentMode').addEventListener('click',()=>{student=true;document.body.classList.add('student');setTimeout(resize,40)});
+document.getElementById('backBtn').addEventListener('click',()=>{student=false;document.body.classList.remove('student');setTimeout(resize,40)});
+
+function setZoom(value){
+  const pct=Math.max(60,Math.min(220,Math.round(value/5)*5));
+  zoom=pct/100;
+  zoomRange.value=String(pct);
+  zoomValue.textContent=pct+'%';
+  render();
+}
+
+function resize(){
+ const r=wrap.getBoundingClientRect(),dpr=window.devicePixelRatio||1;canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);canvas.style.width=r.width+'px';canvas.style.height=r.height+'px';ctx.setTransform(dpr,0,0,dpr,0,0);render()
+}
+window.addEventListener('resize',resize);
+
+fillModels();setModel('cube');setTimeout(resize,30);
+</script>
+</body>
+</html>
